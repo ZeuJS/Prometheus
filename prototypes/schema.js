@@ -17,8 +17,11 @@ var SchemaObject = function(services, litteralSchema) {
 SchemaObject.prototype.insert = function (document, callback) {
   var scopedThis = this;
   this.filterInput(document, function (err, cleanDocument) {
-    if (err) { throw err}
-    scopedThis.source.insert(this.storageEntity, cleanDocument, null, callback);
+    if (err) {
+      callback (err)
+    } else {
+      scopedThis.source.insert(scopedThis.storageEntity, cleanDocument, null, callback);
+    }
   });
 };
 SchemaObject.prototype.setBehaviors = function (services, behaviors) {
