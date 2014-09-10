@@ -3,9 +3,12 @@
 var SchemasBag = require('./bags/schemas.js');
 var BehaviorsBag = require('./bags/behaviors.js');
 var DataSourcesBag = require('./bags/datasources.js');
+var TypesBag = require('./bags/types.js');
+
 var SchemasMapper = require('./mappers/schemas.js');
 var BehaviorsMapper = require('./mappers/behaviors.js');
 var DatasourcesMapper = require('./mappers/datasources.js');
+var TypesMapper = require('./mappers/types.js');
 
 module.exports =
 {
@@ -31,6 +34,10 @@ module.exports =
       id: 'prometheusBehaviors',
       service: new BehaviorsBag(),
     },
+    {
+      id: 'prometheusTypes',
+      service: new TypesBag(),
+    },
   ],
   events: [
     {
@@ -40,13 +47,18 @@ module.exports =
         var dataSourcesBag = services.findById('prometheusDatasources');
         var behaviorsBag = services.findById('prometheusBehaviors');
         var schemasBag = services.findById('prometheusSchemas');
+        var typesBag = services.findById('prometheusTypes');
 
+        new TypesMapper(modules, typesBag);
         new DatasourcesMapper(services, dataSourcesBag, function () {
           new BehaviorsMapper(modules, behaviorsBag);
           new SchemasMapper(modules, schemasBag);
         });
       },
     },
+  ],
+  prometheusTypes: [
+    require('./types/Email.js'),
   ],
   configs: {
     prometheus: {
