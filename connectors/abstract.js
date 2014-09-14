@@ -18,5 +18,8 @@ AbstractConnector.prototype.insert = function (storageEntity, toInsert, options,
   throw 'insert must be defined in connector';
 };
 
+AbstractConnector.prototype.findOne = function (storageEntity, search, callback) {
+  throw 'insert must be defined in connector';
+};
 
 module.exports = AbstractConnector;

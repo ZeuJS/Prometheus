@@ -24,6 +24,11 @@ SchemaObject.prototype.insert = function (document, callback) {
     }
   });
 };
+
+SchemaObject.prototype.findOne = function (search, callback) {
+  this.source.findOne(this.storageEntity, search, callback);
+};
+
 SchemaObject.prototype.setBehaviors = function (services, behaviors) {
 
 };

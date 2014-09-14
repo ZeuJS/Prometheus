@@ -34,4 +34,11 @@ MongoDBConnector.prototype.insert = function (storageEntity, toInsert, options, 
   })
 };
 
+MongoDBConnector.prototype.findOne = function (storageEntity, search, cb) {
+  this.getStorageEntity(storageEntity, function(err, collection){
+    if (err) { throw err; }
+    collection.findOne(search, cb);
+  })
+};
+
 module.exports = MongoDBConnector;
