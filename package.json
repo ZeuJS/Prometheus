@@ -1,7 +1,11 @@
 {
-  "name": "zeujsPrometheus",
+  "name": "zeujs-prometheus",
   "version": "0.0.1-alpha",
   "dependencies": {
-    "mongodb": "~1.4.9"
+    "mongodb": "~1.4.22"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/ZeuJS/Prometheus.git"
   }
 }
