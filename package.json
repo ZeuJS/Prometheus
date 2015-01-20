@@ -2,7 +2,8 @@
   "name": "zeujs-prometheus",
   "version": "0.0.1-alpha",
   "dependencies": {
-    "mongodb": "~1.4.22"
+    "mongodb": "~1.4.22",
+    "json-mask": "~0.3.2"
   },
   "repository" : {
     "type" : "git",
