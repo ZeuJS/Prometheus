@@ -39,6 +39,22 @@ SchemaObject.prototype.findOne = function (maskName, search, callback) {
   this.source.findOne(this.storageEntity, search, callback);
 };
 
+SchemaObject.prototype.find = function (maskName, search, callback) {
+  if (!search && !callback) {
+    callback = maskName;
+    search = undefined;
+    maskName = undefined;
+  } else if (!callback) {
+    callback = search;
+    search = maskName;
+    maskName = undefined;
+  }
+  if (maskName && maskName in this.masks) {
+    search = jsonMask(search, this.masks[maskName])
+  }
+  this.source.find(this.storageEntity, search, callback);
+};
+
 SchemaObject.prototype.setBehaviors = function (services, behaviors) {
 
 };
