@@ -2,6 +2,7 @@
 
 var mongoDriver = require('mongodb');
 var mongoClient = mongoDriver.MongoClient;
+var ObjectId = mongoDriver.ObjectID;
 
 // Prototyping MongoDBConnector from AbstractConnector
 var AbstractConnector = require('./abstract.js');
@@ -37,6 +38,10 @@ MongoDBConnector.prototype.insert = function (storageEntity, toInsert, options, 
 MongoDBConnector.prototype.findOne = function (storageEntity, search, cb) {
   this.getStorageEntity(storageEntity, function(err, collection){
     if (err) { throw err; }
+    if (search.id && search.id.match(/^[0-9a-fA-F]{24}$/)) {
+      search._id = new ObjectId(search.id);
+      delete search.id;
+    }
     collection.findOne(search, cb);
   })
 };
