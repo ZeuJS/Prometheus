@@ -59,6 +59,8 @@ module.exports =
   ],
   prometheusTypes: [
     require('./types/Email.js'),
+    require('./types/DateTime.js'),
+    require('./types/ObjectID.js'),
   ],
   configs: {
     prometheus: {
