@@ -18,7 +18,7 @@ var SchemaObject = function(services, litteralSchema) {
 }
 SchemaObject.prototype.insert = function (document, callback) {
   var scopedThis = this;
-  this.filterInput(document, function (err, cleanDocument) {
+  this.filterSchema(document, function (err, cleanDocument) {
     if (err) {
       callback (err)
     } else {
@@ -56,41 +56,97 @@ SchemaObject.prototype.find = function (maskName, search, callback) {
 };
 
 SchemaObject.prototype.setBehaviors = function (services, behaviors) {
-
+  //todo
 };
-SchemaObject.prototype.filterInput = function (input, cb) {
-  var scopedThis = this;
-  var errors = [];
+
+SchemaObject.prototype.filterSchema = function(input, cb) {
+  cb.apply(null, this.filterObject(input, this.sieve));
+}
+
+SchemaObject.prototype.filterObject = function (input, schema) {
   var output = {};
-  Object.keys(scopedThis.sieve).forEach(function(key) {
-    try {
-      if (!input.hasOwnProperty(key)) {
-        throw {key: key, error: 'Not exist'}
-      }
-      var Object;
-      if (typeof scopedThis.sieve[key] === 'object' && scopedThis.sieve[key] instanceof Array) {
-        Object = scopedThis.sieve[key][0];
-        output[key] = [];
-        if (typeof input[key] !== 'object' || !(input[key] instanceof Array)) {
-          input[key] = [input[key]];
-        }
-        input[key].forEach(function (value) {
-          var object = new Object(value);
-          output[key].push(object.valueOf());
-        });
-      } else {
-        Object = scopedThis.sieve[key];
-        var object = new Object(input[key]);
-        output[key] = object.valueOf();
-      }
-    } catch (e) {
-      errors.push(e);
+  var errors = [];
+  var scopedThis = this;
+  Object.keys(schema).forEach(function(key) {
+    var value;
+    if (typeof input === 'undefined') {
+      value = scopedThis.filterValue(input, schema[key]);
+    } else {
+      value = scopedThis.filterValue(input[key], schema[key]);
     }
+    if (value[0]) {
+      errors.push(
+        {
+          key: key,
+          errors: value[0]
+        }
+      );
+    }
+    output[key] = value[1];
   });
   if (errors.length === 0) {
     errors = null;
   }
-  cb(errors, output);
+  return [errors, output];
+}
+
+SchemaObject.prototype.filterArray = function (scopedInput, scopedSchema) {
+  var input;
+  if (scopedInput instanceof Array) {
+    input = scopedInput;
+  } else {
+    input = [scopedInput];
+  }
+  var errors = [];
+  var output = [];
+  var scopedThis = this;
+
+  input.forEach(function(value) {
+    var val = scopedThis.filterValue(value, scopedSchema[0]);
+    if (val[0]) {
+      errors.push(val[0]);
+    }
+    output.push(val[1]);
+  });
+  if (errors.length === 0) {
+    errors = null;
+  }
+  return [errors, output];
+}
+
+SchemaObject.prototype.filterValue = function (scopedInput, scopedSchema) {
+  if (typeof scopedSchema === 'object' && scopedSchema instanceof Array) {
+    return this.filterArray(scopedInput, scopedSchema);
+  } else if (typeof scopedSchema === 'object' && scopedSchema.constructor === Object) {
+    return this.filterObject(scopedInput, scopedSchema);
+  }
+
+  var errors = [];
+  var output;
+  if (typeof scopedInput === 'undefined') {
+    errors.push('undefined');
+  }
+  try {
+    var object = new scopedSchema(scopedInput);
+    if(object.valueFor) {
+      output = object.valueFor(this.source.constructor.name);
+    } else if(object.valueOf) {
+      output = object.valueOf();
+    } else {
+      output = object;
+    }
+  } catch (e) {
+    if (typeof e === 'string') {
+      errors.push(e);
+    } else {
+      errors.push(e.message);
+    }
+  }
+
+  if (errors.length === 0) {
+    errors = null;
+  }
+  return [errors, output];
 };
 
 module.exports = SchemaObject;
