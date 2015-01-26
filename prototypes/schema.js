@@ -49,6 +49,14 @@ SchemaObject.prototype.find = function (maskName, search, callback) {
     search = maskName;
     maskName = undefined;
   }
+
+  var schemaThis = this;
+
+  Object.keys(search).forEach(function (key) {
+    var object = navigateWithDots(schemaThis.sieve, key);
+    search[key] = new object(search[key]);
+  });
+
   if (maskName && maskName in this.masks) {
     search = jsonMask(search, this.masks[maskName])
   }
@@ -150,3 +158,12 @@ SchemaObject.prototype.filterValue = function (scopedInput, scopedSchema) {
 };
 
 module.exports = SchemaObject;
+
+function navigateWithDots (object, way) {
+  if (typeof way === 'string') {
+    way = way.split(".");
+  }
+
+  while(way.length && (object = object[way.shift()]));
+  return object;
+}
