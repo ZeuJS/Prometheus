@@ -1,7 +1,10 @@
 "use strict";
 
 var mongoDriver = require('mongodb');
+var fs = require('fs');
 var mongoClient = mongoDriver.MongoClient;
+var GridStore = mongoDriver.GridStore;
+var Grid = mongoDriver.Grid;
 var ObjectId = mongoDriver.ObjectID;
 
 // Prototyping MongoDB from AbstractConnector
@@ -29,10 +32,28 @@ MongoDB.prototype.getDatasource = function (object, cb) {
 };
 
 MongoDB.prototype.insert = function (storageEntity, toInsert, options, cb) {
-  this.getStorageEntity(storageEntity, function(err, collection){
-    if (err) { throw err; }
-    collection.insert(toInsert, cb);
-  })
+  var self = this;
+  if (options.isBinary) {
+    fs.readFile(options.bin.path, function (err, file) {
+      if (err) throw err;
+      var storageOptions = {
+        metadata: toInsert,
+        root: storageEntity
+      };
+      var gridStore = new GridStore(self.datasource, new ObjectId(), options.bin.name, 'w', storageOptions);
+      gridStore.open(function(err, gridStore) {
+        gridStore.write(file, function(err, gridStore) {
+
+          gridStore.close(cb);
+        });
+      });
+    });
+  } else {
+    this.getStorageEntity(storageEntity, function(err, collection){
+      if (err) { throw err; }
+      collection.insert(toInsert, cb);
+    })
+  }
 };
 
 MongoDB.prototype.findOne = function (storageEntity, search, cb) {

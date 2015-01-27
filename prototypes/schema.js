@@ -14,15 +14,21 @@ var SchemaObject = function(services, litteralSchema) {
   this.setBehaviors(services, litteralSchema.behaviors);
   this.storageEntity = litteralSchema.storageEntity;
   this.source = services.findById('prometheusDatasources').get(litteralSchema.source).source;
+  this.binaryStorage = litteralSchema.withBinary || false;
 
 }
-SchemaObject.prototype.insert = function (document, callback) {
+SchemaObject.prototype.insert = function (document, options, callback) {
+  if (!callback) {
+    callback = options;
+    options = {};
+  }
+  options.isBinary = this.binaryStorage;
   var scopedThis = this;
   this.filterSchema(document, function (err, cleanDocument) {
     if (err) {
       callback (err)
     } else {
-      scopedThis.source.insert(scopedThis.storageEntity, cleanDocument, null, callback);
+      scopedThis.source.insert(scopedThis.storageEntity, cleanDocument, options, callback);
     }
   });
 };
