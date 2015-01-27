@@ -33,29 +33,24 @@ SchemaObject.prototype.insert = function (document, options, callback) {
   });
 };
 
-SchemaObject.prototype.findOne = function (maskName, search, callback) {
+SchemaObject.prototype.findOne = function (search, options, callback) {
   if (!callback) {
-    callback = search;
-    search = maskName;
-    maskName = undefined;
+    callback = options;
+    options = {}
   }
-  if (maskName && maskName in this.masks) {
-    search = jsonMask(search, this.masks[maskName])
+  if (options.maskName && options.maskName in this.masks) {
+    search = jsonMask(search, this.masks[options.maskName])
   }
   this.source.findOne(this.storageEntity, search, callback);
 };
 
-SchemaObject.prototype.find = function (maskName, search, callback) {
-  if (!search && !callback) {
-    callback = maskName;
-    search = undefined;
-    maskName = undefined;
-  } else if (!callback) {
-    callback = search;
-    search = maskName;
-    maskName = undefined;
-  }
+SchemaObject.prototype.find = function (search, options, callback) {
 
+  if (!callback) {
+    callback = options;
+    options = {}
+  }
+  options.isBinary = this.binaryStorage;
   var schemaThis = this;
 
   Object.keys(search).forEach(function (key) {
@@ -63,10 +58,10 @@ SchemaObject.prototype.find = function (maskName, search, callback) {
     search[key] = new object(search[key]);
   });
 
-  if (maskName && maskName in this.masks) {
-    search = jsonMask(search, this.masks[maskName])
+  if (options.maskName && options.maskName in this.masks) {
+    search = jsonMask(search, this.masks[options.maskName])
   }
-  this.source.find(this.storageEntity, search, callback);
+  this.source.find(this.storageEntity, search, options, callback);
 };
 
 SchemaObject.prototype.setBehaviors = function (services, behaviors) {

@@ -67,7 +67,15 @@ MongoDB.prototype.findOne = function (storageEntity, search, cb) {
   })
 };
 
-MongoDB.prototype.find = function (storageEntity, search, cb) {
+MongoDB.prototype.find = function (storageEntity, search, options, cb) {
+  if (options.isBinary) {
+    storageEntity = storageEntity + '.files';
+    var oldSearch = search;
+    search = {};
+    Object.keys(oldSearch).forEach(function(key) {
+      search['metadata.' + key] = oldSearch[key];
+    });
+  }
   this.getStorageEntity(storageEntity, function(err, collection){
     if (err) { throw err; }
     collection.find(search).toArray(cb);
