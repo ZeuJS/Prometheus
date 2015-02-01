@@ -38,10 +38,11 @@ SchemaObject.prototype.findOne = function (search, options, callback) {
     callback = options;
     options = {}
   }
+  options.isBinary = this.binaryStorage;
   if (options.maskName && options.maskName in this.masks) {
     search = jsonMask(search, this.masks[options.maskName])
   }
-  this.source.findOne(this.storageEntity, search, callback);
+  this.source.findOne(this.storageEntity, search, options, callback);
 };
 
 SchemaObject.prototype.find = function (search, options, callback) {
@@ -157,6 +158,17 @@ SchemaObject.prototype.filterValue = function (scopedInput, scopedSchema) {
   }
   return [errors, output];
 };
+
+SchemaObject.prototype.getData = function (id, options, callback) {
+  if (!this.binaryStorage) {
+    throw 'To use retrieve, schema must be binary';
+  }
+  if (!callback) {
+    callback = options;
+    options = {}
+  }
+  this.source.getData(this.storageEntity, id, options, callback);
+}
 
 module.exports = SchemaObject;
 

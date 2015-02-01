@@ -2,6 +2,7 @@
 
 var mongoDriver = require('mongodb');
 var fs = require('fs');
+var stream = require('stream');
 var mongoClient = mongoDriver.MongoClient;
 var GridStore = mongoDriver.GridStore;
 var Grid = mongoDriver.Grid;
@@ -37,6 +38,7 @@ MongoDB.prototype.insert = function (storageEntity, toInsert, options, cb) {
     fs.readFile(options.bin.path, function (err, file) {
       if (err) throw err;
       var storageOptions = {
+        content_type: options.bin.type,
         metadata: toInsert,
         root: storageEntity
       };
@@ -56,7 +58,20 @@ MongoDB.prototype.insert = function (storageEntity, toInsert, options, cb) {
   }
 };
 
-MongoDB.prototype.findOne = function (storageEntity, search, cb) {
+MongoDB.prototype.findOne = function (storageEntity, search, options, cb) {
+  if (options.isBinary) {
+    storageEntity = storageEntity + '.files';
+    var oldSearch = search;
+    search = {};
+    Object.keys(oldSearch).forEach(function(key) {
+      if (key === '_id' && oldSearch[key].match(/^[0-9a-fA-F]{24}$/)) {
+        search[key] = new ObjectId(oldSearch[key]);
+      } else {
+        search['metadata.' + key] = oldSearch[key];
+      }
+
+    });
+  }
   this.getStorageEntity(storageEntity, function(err, collection){
     if (err) { throw err; }
     if (search.id && search.id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -80,6 +95,36 @@ MongoDB.prototype.find = function (storageEntity, search, options, cb) {
     if (err) { throw err; }
     collection.find(search).toArray(cb);
   })
+};
+
+MongoDB.prototype.getData = function (storageEntity, id, options, cb) {
+  if (typeof id === 'string') {
+    id = new ObjectId(id);
+  }
+  var storageOptions = {
+    root: storageEntity
+  }
+  options.range.start = options.range.start || 0;
+  var gridStore = new GridStore(this.datasource, id, 'r', storageOptions);
+  gridStore.open(function(err, gridStore) {
+    if (!gridStore) {
+      return cb(err);
+    }
+    gridStore.seek(options.range.start, function() {
+      // Read the entire file
+      var length = null;
+      if (options.range.end) {
+        length = options.range.end - options.range.start +1;
+      }
+      gridStore.read(length, function(err, data) {
+        var bufferStream = new stream.PassThrough();
+        bufferStream.end(data);
+        cb(err, bufferStream);
+        gridStore.close();
+      });
+    });
+  });
+
 };
 
 module.exports = MongoDB;
