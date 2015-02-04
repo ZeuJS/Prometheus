@@ -46,8 +46,11 @@ SchemaObject.prototype.findOne = function (search, options, callback) {
 };
 
 SchemaObject.prototype.find = function (search, options, callback) {
-
-  if (!callback) {
+  if (!options && !callback) {
+    callback = search;
+    search = {};
+    options = {};
+  } else if (!callback) {
     callback = options;
     options = {}
   }
