@@ -58,6 +58,15 @@ MongoDB.prototype.insert = function (storageEntity, toInsert, options, cb) {
   }
 };
 
+MongoDB.prototype.save = function (storageEntity, toSave, options, cb) {
+  //todo implement binary
+  var self = this;
+  this.getStorageEntity(storageEntity, function(err, collection){
+    if (err) { throw err; }
+    collection.save(toSave, cb);
+  })
+};
+
 MongoDB.prototype.findOne = function (storageEntity, search, options, cb) {
   if (options.isBinary) {
     storageEntity = storageEntity + '.files';
@@ -74,7 +83,9 @@ MongoDB.prototype.findOne = function (storageEntity, search, options, cb) {
   }
   this.getStorageEntity(storageEntity, function(err, collection){
     if (err) { throw err; }
-    if (search.id && search.id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (typeof search._id === 'string' && search._id.match(/^[0-9a-fA-F]{24}$/)) {
+      search._id = new ObjectId(search._id);
+    } else if (search.id && search.id.match(/^[0-9a-fA-F]{24}$/)) {
       search._id = new ObjectId(search.id);
       delete search.id;
     }
@@ -104,6 +115,8 @@ MongoDB.prototype.getData = function (storageEntity, id, options, cb) {
   var storageOptions = {
     root: storageEntity
   }
+  options = options || {};
+  options.range = options.range || {};
   options.range.start = options.range.start || 0;
   var gridStore = new GridStore(this.datasource, id, 'r', storageOptions);
   gridStore.open(function(err, gridStore) {

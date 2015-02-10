@@ -33,6 +33,22 @@ SchemaObject.prototype.insert = function (document, options, callback) {
   });
 };
 
+SchemaObject.prototype.save = function (document, options, callback) {
+  if (!callback) {
+    callback = options;
+    options = {};
+  }
+  options.isBinary = this.binaryStorage;
+  var scopedThis = this;
+  this.filterSchema(document, { keepId: true }, function (err, cleanDocument) {
+    if (err) {
+      callback (err)
+    } else {
+      scopedThis.source.save(scopedThis.storageEntity, cleanDocument, options, callback);
+    }
+  });
+};
+
 SchemaObject.prototype.findOne = function (search, options, callback) {
   if (!callback) {
     callback = options;
@@ -72,15 +88,27 @@ SchemaObject.prototype.setBehaviors = function (services, behaviors) {
   //todo
 };
 
-SchemaObject.prototype.filterSchema = function(input, cb) {
-  cb.apply(null, this.filterObject(input, this.sieve));
+SchemaObject.prototype.filterSchema = function(input, options, cb) {
+  if (!cb) {
+    cb = options;
+    options = {};
+  }
+  cb.apply(null, this.filterObject(input, this.sieve, options));
 }
 
-SchemaObject.prototype.filterObject = function (input, schema) {
+SchemaObject.prototype.filterObject = function (input, schema, options) {
   var output = {};
   var errors = [];
+  options = options || {};
   var scopedThis = this;
+  if (options.keepId && !schema._id) {
+    schema._id = true;
+  }
   Object.keys(schema).forEach(function(key) {
+    if (key === '_id' && options.keepId) {
+      output[key] = input[key];
+      return;
+    }
     var value;
     if (typeof input === 'undefined') {
       value = scopedThis.filterValue(input, schema[key]);
